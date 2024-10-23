@@ -61,7 +61,7 @@ if ($qurbanResult->num_rows > 0) {
             <!-- Form untuk menambah tipe qurban -->
             <div class="mt-8">
                 <h2 class="text-xl font-bold">Tambah Tipe Qurban</h2>
-                <form method="POST" action="">
+                <form method="POST" action="../service/prosesQurban.php">
                     <div class="mb-4">
                         <label for="tipe_qurban" class="block">Tipe Qurban:</label>
                         <input type="text" id="tipe_qurban" name="tipe_qurban" class="border p-2 w-full" required>
@@ -81,7 +81,7 @@ if ($qurbanResult->num_rows > 0) {
             <!-- Form untuk mengedit tipe qurban -->
             <div class="mt-8">
                 <h2 class="text-xl font-bold">Edit Tipe Qurban</h2>
-                <form method="POST" action="">
+                <form method="POST" action="../service/prosesQurban.php">
                     <div class="mb-4">
                         <label for="qurban_id" class="block">Pilih Tipe Qurban:</label>
                         <select id="qurban_id" name="qurban_id" class="border p-2 w-full" required>
