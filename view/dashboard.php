@@ -51,7 +51,7 @@ $detail_qurban = getDetailQurban($conn);
       </div>
       <h2 class="text-3xl font-bold text-center">Tabungan Total</h2>
       <p class="text-5xl font-extrabold text-center">
-        Rp<?= number_format($total, 0, ',', '.'); ?>
+        Rp<?= number_format($total ?? 0, 0, ',', '.'); ?>
       </p>
       <p class="text-2xl text-center">
         <?= $count_qurban . " Qurban Card"; ?>
