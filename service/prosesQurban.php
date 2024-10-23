@@ -1,4 +1,6 @@
 <?php
+include 'data.php';
+
 // Fungsi untuk menambahkan tipe qurban
 if (isset($_POST['add_qurban'])) {
     $tipe_qurban = $_POST['tipe_qurban'];
