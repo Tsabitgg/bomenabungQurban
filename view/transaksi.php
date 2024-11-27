@@ -1,86 +1,114 @@
+<?php
+include '../service/data.php';
+
+session_start();
+
+if (!isset($_SESSION['admin'])) {
+  header("Location: login.php");
+  exit();
+}
+
+// Pagination setup
+$total_data = getTotalTransaksi($conn);
+$per_page = 50;
+$total_pages = ceil($total_data / $per_page);
+$current_page = isset($_GET['page']) ? max((int)$_GET['page'], 1) : 1;
+$offset = ($current_page - 1) * $per_page;
+
+// Fetch data for current page
+$transactions = getPaginatedTransaksi($conn, $offset, $per_page);
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Transaksi</title>
-    <script src="https://cdn.tailwindcss.com">
-  </script>
-    <link href="https://cdn.tailwindcss.com" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
 </head>
-<body class="bg-white text-black">
-    <div class="flex">
+<body class="bg-gray-100 text-gray-800">
+    <div class="flex min-h-screen">
         <!-- Sidebar -->
         <?php include 'sidebar.php'; ?>
 
         <!-- Main Content -->
-        <div class="w-3/4 p-6">
-            <header class="flex justify-between items-center mb-8">
-                <h1 class="text-2xl font-bold">Transaksi</h1>
+        <div class="flex-1 p-6">
+            <!-- Header -->
+            <header class="mb-8 flex justify-between items-center">
+                <h1 class="text-3xl font-bold">Transaksi</h1>
             </header>
-            <div class="grid grid-cols-2 gap-6">
-                <!-- Card Total Transaksi -->
-                <div class="bg-green-500 p-6 rounded-lg text-white">
-                    <h2 class="text-3xl font-bold">Total Transaksi</h2>
-                    <p class="text-4xl font-bold">15.750.920.000</p>
+
+            <!-- Dashboard Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <!-- Total Transactions Card -->
+                <div class="bg-[#1845A2] text-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-xl font-bold">Jumlah Nominal Transaksi</h2>
+                    <p class="text-4xl font-bold mt-2">
+                        Rp<?= number_format(getSUMTransaksi($conn)->fetch_array()[0], 0, ',', '.'); ?>
+                    </p>
                 </div>
-                <!-- Card Qurban Card -->
-                <div class="bg-gray-200 p-6 rounded-lg">
-                    <h2 class="text-xl font-bold">Qurban Card</h2>
-                    <p class="text-2xl font-bold">7.520 Kartu</p>
+
+                <!-- Total Qurban Cards -->
+                <div class="bg-[#1845A2] text-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-xl font-bold">Jumlah Transaksi</h2>
+                    <p class="text-3xl font-bold mt-2">
+                        <?= number_format(getCountTransaksi($conn)->fetch_array()[0], 0, ',', '.'); ?>
+                    </p>
                 </div>
-                <!-- Tabel History Transaksi -->
-                <div class="bg-gray-200 p-6 rounded-lg col-span-2">
-                    <h2 class="text-xl font-bold mb-4">History Transaksi</h2>
-                    <table class="w-full text-left">
-        <thead>
-            <tr class="bg-gray-300">
-                <th class="p-2">Nama</th>
-                <th class="p-2">Jenis Qurban</th>
-                <th class="p-2">Jenis Transaksi</th>
-                <th class="p-2">Jumlah</th>
-                <th class="p-2">Waktu</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr class="border-t">
-                <td class="p-2">Ahmad</td>
-                <td class="p-2">Kambing</td>
-                <td class="p-2 text-red-500">Pengeluaran</td>
-                <td class="p-2 text-red-500">70.000</td>
-                <td class="p-2">12/10/2024</td>
-            </tr>
-            <tr class="border-t">
-                <td class="p-2">Hambali</td>
-                <td class="p-2">Sapi</td>
-                <td class="p-2 text-green-500">Pemasukan</td>
-                <td class="p-2 text-green-500">1.800.000</td>
-                <td class="p-2">12/10/2024</td>
-            </tr>
-            <tr class="border-t">
-                <td class="p-2">Syafii</td>
-                <td class="p-2">Domba</td>
-                <td class="p-2 text-green-500">Pemasukan</td>
-                <td class="p-2 text-green-500">1.950.000</td>
-                <td class="p-2">12/10/2024</td>
-            </tr>
-            <tr class="border-t">
-                <td class="p-2">Lukman</td>
-                <td class="p-2">Kambing</td>
-                <td class="p-2 text-red-500">Pengeluaran</td>
-                <td class="p-2 text-red-500">20.000</td>
-                <td class="p-2">12/10/2024</td>
-            </tr>
-            <tr class="border-t">
-                <td class="p-2">Umar</td>
-                <td class="p-2">Sapi</td>
-                <td class="p-2 text-red-500">Pengeluaran</td>
-                <td class="p-2 text-red-500">70.000</td>
-                <td class="p-2">12/10/2024</td>
-            </tr>
-        </tbody>
-    </table>
+            </div>
+
+            <!-- Transaction Table -->
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-xl font-bold mb-4">History Transaksi</h2>
+                <div class="overflow-auto">
+                    <table class="w-full border-collapse border border-[#1845A2]">
+                        <thead>
+                            <tr class="bg-gray-300 text-left">
+                                <th class="p-2 border">Nama</th>
+                                <th class="p-2 border">Jenis Qurban</th>
+                                <th class="p-2 border">Jenis Transaksi</th>
+                                <th class="p-2 border">Jumlah</th>
+                                <th class="p-2 border">Waktu</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php if ($transactions->num_rows > 0): ?>
+                                <?php while ($row = $transactions->fetch_assoc()): ?>
+                                    <tr class="hover:bg-gray-100">
+                                        <td class="p-2 border"><?= htmlspecialchars($row['nama']) ?></td>
+                                        <td class="p-2 border"><?= htmlspecialchars($row['tipe_qurban']) ?></td>
+                                        <td class="p-2 border <?= $row['metode_pembayaran'] === 'va' ? 'text-orange-500' : 'text-green-500' ?>">
+                                            <?= htmlspecialchars($row['metode_pembayaran']) ?>
+                                        </td>
+                                        <td class="p-2 border">Rp<?= number_format($row['jumlah'], 0, ',', '.') ?></td>
+                                        <td class="p-2 border"><?= htmlspecialchars($row['waktu']) ?></td>
+                                    </tr>
+                                <?php endwhile; ?>
+                            <?php else: ?>
+                                <tr>
+                                    <td colspan="5" class="p-4 text-center text-gray-500">Tidak ada transaksi.</td>
+                                </tr>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <div class="mt-4">
+                    <nav class="flex justify-center">
+                        <ul class="flex space-x-2">
+                            <?php for ($i = 1; $i <= $total_pages; $i++): ?>
+                                <li>
+                                    <a href="?page=<?= $i ?>" class="px-4 py-2 rounded <?= $i == $current_page ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-800 hover:bg-blue-100' ?>">
+                                        <?= $i ?>
+                                    </a>
+                                </li>
+                            <?php endfor; ?>
+                        </ul>
+                    </nav>
                 </div>
             </div>
         </div>

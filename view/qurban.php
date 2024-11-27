@@ -1,13 +1,59 @@
 <?php
 include '../service/data.php';
 
-// Mengambil data qurban dan kartu qurban
-$qurbanResult = getDetailQurban($conn);
-$kartuQurbanResult = getKartuQurban($conn);
+session_start();
 
-// Variabel total hewan
-$totalHewan = 0;
+if (!isset($_SESSION['admin'])) {
+    header("Location: login.php");
+    exit();
+}
+
+// Initialize search variable
+$search = '';
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $search = isset($_POST['search']) ? $_POST['search'] : '';
+    header("Location: ?search=" . urlencode($search));
+    exit();
+}
+
+if (isset($_GET['search'])) {
+    $search = $_GET['search'];
+}
+
+// Default pagination values
+$perPageOptions = [25, 50, 100, 500, 1000];
+$perPage = isset($_GET['per_page']) && in_array($_GET['per_page'], $perPageOptions) ? (int)$_GET['per_page'] : 25;
+$page = isset($_GET['page']) && is_numeric($_GET['page']) && $_GET['page'] > 0 ? (int)$_GET['page'] : 1;
+$offset = ($page - 1) * $perPage;
+
+// Query for fetching data
+if ($search != '') {
+    $query = "SELECT * FROM kartu_qurban kq
+              JOIN qurban q ON kq.qurban_id = q.qurban_id
+              WHERE kq.nama_pengqurban LIKE '%$search%' OR kq.va_number LIKE '%$search%'
+              LIMIT $perPage OFFSET $offset";
+    $kartuQurbanResult = $conn->query($query);
+
+    $countQuery = "SELECT COUNT(*) as total FROM kartu_qurban kq
+                   JOIN qurban q ON kq.qurban_id = q.qurban_id
+                   WHERE kq.nama_pengqurban LIKE '%$search%' OR kq.va_number LIKE '%$search%'";
+} else {
+    $query = "SELECT * FROM kartu_qurban kq
+              JOIN qurban q ON kq.qurban_id = q.qurban_id
+              LIMIT $perPage OFFSET $offset";
+    $kartuQurbanResult = $conn->query($query);
+
+    $countQuery = "SELECT COUNT(*) as total FROM kartu_qurban kq
+                   JOIN qurban q ON kq.qurban_id = q.qurban_id";
+}
+$totalRowsResult = $conn->query($countQuery);
+$totalRows = $totalRowsResult->fetch_assoc()['total'];
+$totalPages = ceil($totalRows / $perPage);
+
+// Get qurban data for displaying total hewan
+$qurbanResult = getDetailQurban($conn);
 $rincianHewan = [];
+$totalHewan = 0;
 
 if ($qurbanResult->num_rows > 0) {
     while ($row = $qurbanResult->fetch_assoc()) {
@@ -29,112 +75,121 @@ if ($qurbanResult->num_rows > 0) {
 </head>
 <body class="bg-white text-black">
     <div class="flex">
-        <!-- Sidebar -->
         <?php include 'sidebar.php'; ?>
 
-        <!-- Main Content -->
         <div class="w-3/4 p-6">
             <header class="flex justify-between items-center mb-8">
                 <h1 class="text-2xl font-bold">Qurban</h1>
             </header>
             
-            <div class="grid grid-cols-2 gap-6">
-                <!-- Card Hewan Qurban -->
-                <div class="bg-yellow-500 p-6 rounded-lg text-white">
-                    <h2 class="text-3xl font-bold">Total Hewan Qurban</h2>
-                    <p class="text-4xl font-bold"><?php echo number_format($totalHewan); ?> Hewan</p>
-                </div>
-                <!-- Card Per Hewan -->
-                <div class="bg-gray-200 p-6 rounded-lg">
-                    <h2 class="text-xl font-bold">Rincian Hewan Qurban</h2>
-                    <div class="space-y-2">
-                        <?php foreach ($rincianHewan as $hewan) : ?>
-                            <div class="flex justify-between">
-                                <span><?php echo $hewan['tipe_qurban']; ?></span>
-                                <span><?php echo number_format($hewan['jumlah']); ?> Hewan</span>
-                            </div>
-                        <?php endforeach; ?>
-                    </div>
-                </div>
+            <div class="bg-[#1845A2] p-6 rounded-lg text-white">
+                <h2 class="text-3xl font-bold">Total Hewan Qurban</h2>
+                <p class="text-4xl font-bold"><?php echo number_format($totalHewan); ?> Hewan</p>
             </div>
 
-            <!-- Form untuk menambah tipe qurban -->
-            <div class="mt-8">
-                <h2 class="text-xl font-bold">Tambah Tipe Qurban</h2>
-                <form method="POST" action="../service/prosesQurban.php">
-                    <div class="mb-4">
-                        <label for="tipe_qurban" class="block">Tipe Qurban:</label>
-                        <input type="text" id="tipe_qurban" name="tipe_qurban" class="border p-2 w-full" required>
-                    </div>
-                    <div class="mb-4">
-                        <label for="biaya" class="block">Biaya:</label>
-                        <input type="number" id="biaya" name="biaya" class="border p-2 w-full" required>
-                    </div>
-                    <div class="mb-4">
-                        <label for="jenis" class="block">Jenis:</label>
-                        <input type="text" id="jenis" name="jenis" class="border p-2 w-full" required>
-                    </div>
-                    <button type="submit" name="add_qurban" class="bg-blue-500 text-white p-2 rounded">Tambah</button>
-                </form>
-            </div>
-
-            <!-- Form untuk mengedit tipe qurban -->
-            <div class="mt-8">
-                <h2 class="text-xl font-bold">Edit Tipe Qurban</h2>
-                <form method="POST" action="../service/prosesQurban.php">
-                    <div class="mb-4">
-                        <label for="qurban_id" class="block">Pilih Tipe Qurban:</label>
-                        <select id="qurban_id" name="qurban_id" class="border p-2 w-full" required>
-                            <?php
-                            $qurbanData = $conn->query("SELECT qurban_id, tipe_qurban FROM qurban WHERE status = 'Aktif'");
-                            while ($row = $qurbanData->fetch_assoc()) {
-                                echo "<option value='" . $row['qurban_id'] . "'>" . $row['tipe_qurban'] . "</option>";
-                            }
-                            ?>
-                        </select>
-                    </div>
-                    <div class="mb-4">
-                        <label for="tipe_qurban" class="block">Nama Tipe Qurban Baru:</label>
-                        <input type="text" id="tipe_qurban" name="tipe_qurban" class="border p-2 w-full" required>
-                    </div>
-                    <button type="submit" name="edit_qurban" class="bg-green-500 text-white p-2 rounded">Edit</button>
-                </form>
-            </div>
-
-            <!-- Tabel data kartu qurban -->
-            <div class="mt-8">
-                <h2 class="text-xl font-bold">Daftar Kartu Qurban</h2>
+            <div class="mt-6 bg-[#F9F9F9] text-black p-4 rounded-lg">
+                <h3 class="text-xl font-bold mb-4">Rincian Hewan Qurban</h3>
                 <table class="w-full border-collapse border">
-                    <thead>
-                        <tr class="bg-gray-300">
-                            <th class="border p-2">Nama Pengqurban</th>
-                            <th class="border p-2">Tipe Qurban</th>
-                            <th class="border p-2">Jumlah Terkumpul</th>
-                            <th class="border p-2">Status</th>
-                            <th class="border p-2">VA Number</th>
+                    <thead class="bg-[#E0E0E0]">
+                        <tr>
+                            <th class="border p-2">Tipe Hewan</th>
+                            <th class="border p-2">Jumlah Hewan</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <?php if ($kartuQurbanResult->num_rows > 0) : ?>
-                            <?php while ($row = $kartuQurbanResult->fetch_assoc()) : ?>
-                                <tr>
-                                    <td class="border p-2"><?php echo $row['nama_pengqurban']; ?></td>
-                                    <td class="border p-2"><?php echo $row['tipe_qurban']; ?></td>
-                                    <td class="border p-2"><?php echo number_format($row['jumlah_terkumpul']); ?></td>
-                                    <td class="border p-2"><?php echo $row['status']; ?></td>
-                                    <td class="border p-2"><?php echo $row['va_number']; ?></td>
-                                </tr>
-                            <?php endwhile; ?>
-                        <?php else : ?>
+                        <?php foreach ($rincianHewan as $hewan) : ?>
                             <tr>
-                                <td colspan="5" class="border p-2 text-center">Belum ada data kartu qurban.</td>
+                                <td class="border p-2"><?php echo $hewan['tipe_qurban']; ?></td>
+                                <td class="border p-2"><?php echo number_format($hewan['jumlah']); ?> Hewan</td>
                             </tr>
-                        <?php endif; ?>
+                        <?php endforeach; ?>
                     </tbody>
                 </table>
             </div>
 
+            <div class="mt-6 mb-4">
+                <form method="POST" class="flex items-center">
+                    <input type="text" name="search" value="<?php echo htmlspecialchars($search); ?>" class="border p-2 w-1/2 mr-2" placeholder="Cari berdasarkan Nama atau VA Number">
+                    <button type="submit" class="bg-blue-500 text-white p-2 rounded">Cari</button>
+                </form>
+            </div>
+
+            <form method="GET" class="mb-4">
+                <input type="hidden" name="search" value="<?php echo htmlspecialchars($search); ?>">
+                <label for="per_page">Tampilkan:</label>
+                <select name="per_page" id="per_page" onchange="this.form.submit()" class="border p-2">
+                    <?php foreach ($perPageOptions as $option) : ?>
+                        <option value="<?php echo $option; ?>" <?php if ($option == $perPage) echo 'selected'; ?>>
+                            <?php echo $option; ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select> data
+            </form>
+
+            <table class="w-full border-collapse border">
+                <thead>
+                    <tr class="bg-gray-300">
+                        <th class="border p-2">No</th>
+                        <th class="border p-2">Nama Pengqurban</th>
+                        <th class="border p-2">Tipe Qurban</th>
+                        <th class="border p-2">Jumlah Terkumpul</th>
+                        <th class="border p-2">Status</th>
+                        <th class="border p-2">VA Number</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php if ($kartuQurbanResult->num_rows > 0) : ?>
+                        <?php $no = $offset + 1; ?>
+                        <?php while ($row = $kartuQurbanResult->fetch_assoc()) : ?>
+                            <tr>
+                                <td class="border p-2"><?php echo $no++; ?></td>
+                                <td class="border p-2"><?php echo $row['nama_pengqurban']; ?></td>
+                                <td class="border p-2"><?php echo $row['tipe_qurban']; ?></td>
+                                <td class="border p-2"><?php echo number_format($row['jumlah_terkumpul']); ?></td>
+                                <td class="border p-2"><?php echo $row['status']; ?></td>
+                                <td class="border p-2"><?php echo $row['va_number']; ?></td>
+                            </tr>
+                        <?php endwhile; ?>
+                    <?php else : ?>
+                        <tr>
+                            <td colspan="6" class="border p-2 text-center">Belum ada data kartu qurban.</td>
+                        </tr>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+
+            <div class="mt-4 flex justify-center">
+                <?php if ($page > 1) : ?>
+                    <a href="?search=<?php echo urlencode($search); ?>&per_page=<?php echo $perPage; ?>&page=<?php echo $page - 1; ?>" class="px-4 py-2 bg-gray-300 rounded mr-2">Sebelumnya</a>
+                <?php endif; ?>
+                <span class="px-4 py-2">Halaman <?php echo $page; ?> dari <?php echo $totalPages; ?></span>
+                <?php if ($page < $totalPages) : ?>
+                    <a href="?search=<?php echo urlencode($search); ?>&per_page=<?php echo $perPage; ?>&page=<?php echo $page + 1; ?>" class="px-4 py-2 bg-gray-300 rounded ml-2">Berikutnya</a>
+                <?php endif; ?>
+            </div>
         </div>
     </div>
+    
+    <script>
+        // Open Modal Add Qurban
+        document.getElementById('addQurbanBtn').addEventListener('click', function() {
+            document.getElementById('addQurbanModal').classList.remove('hidden');
+        });
+
+        // Open Modal Edit Qurban
+        document.getElementById('editQurbanBtn').addEventListener('click', function() {
+            document.getElementById('editQurbanModal').classList.remove('hidden');
+        });
+
+        // Close Modal Add Qurban
+        document.getElementById('closeAddQurbanModal').addEventListener('click', function() {
+            document.getElementById('addQurbanModal').classList.add('hidden');
+        });
+
+        // Close Modal Edit Qurban
+        document.getElementById('closeEditQurbanModal').addEventListener('click', function() {
+            document.getElementById('editQurbanModal').classList.add('hidden');
+        });
+    </script>
 </body>
 </html>

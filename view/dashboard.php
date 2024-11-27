@@ -2,142 +2,220 @@
 
 include '../service/data.php';
 
+session_start();
+
+if (!isset($_SESSION['admin'])) {
+  header("Location: login.php");
+  exit();
+}
+
 // Fetch necessary data
 $total = getSUMTransaksi($conn)->fetch_row()[0]; 
 $count_qurban = getCountKartuQurban($conn)->fetch_row()[0];
-$transaksi = getAllTransaksi($conn);
+$transaksi = getTransaksiForDashboard($conn);
 $count_pengqurban = getCountPengqurban($conn)->fetch_row()[0];
 $count_transaksi = getCountTransaksi($conn)->fetch_row()[0];
 $detail_qurban = getDetailQurban($conn);
+
+$summaryData = getSummaryData($conn);
+$totalBiaya = $summaryData['total_biaya'];
+$totalTerkumpul = $summaryData['total_terkumpul'];
+
+
+$uang_qurban = getUangQurban($conn);
+$uang_tabungan = getUangTabungan($conn);
+$saldo = getSaldo($conn);
+
+// Initialize arrays for the chart labels and data
+$labels = [];
+$data = [];
+
+while ($row = $detail_qurban->fetch_assoc()) {
+    $labels[] = $row['tipe_qurban'];  // Animal types (e.g., Sapi, Kambing, Domba)
+    $data[] = $row['jumlah'];  // Count of animals
+}
 ?>
 
-<!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="utf-8"/>
-  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-  <title>Dashboard</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet"/>
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet"/>
-  <style>
-   body {
-     font-family: 'Roboto', sans-serif;
-   }
-  </style>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet"/>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body class="bg-white text-black">
-  <div class="flex">
-    <!-- Sidebar -->
-    <?php include 'sidebar.php'; ?>
-    <!-- Main Content -->
-   <div class="w-3/4 p-6">
-    <header class="flex justify-between items-center mb-8">
-     <h1 class="text-2xl font-bold">Dashboard</h1>
-     <div class="flex items-center space-x-4">
-      <i class="fas fa-bell text-gray-600"></i>
-      <i class="fas fa-envelope text-gray-600"></i>
-      <input class="bg-gray-300 text-black p-2 rounded" placeholder="Search Here" type="text"/>
-      <img alt="User profile picture" class="rounded-full" height="40" src="https://storage.googleapis.com/a1aa/image/fXmQRhwDrN1fkEEWMWTGml4kjjbCLk0wRrcrlVnYWcfnpONnA.jpg" width="40"/>
-     </div>
-    </header>
-    <div class="grid grid-cols-2 gap-6">
 
-     <!-- Tabungan Total -->
-     <div class="bg-gradient-to-r from-yellow-500 to-orange-500 p-8 rounded-lg text-white space-y-4 shadow-lg">
-      <div class="text-center space-y-1">
-        <p class="text-lg font-bold text-center">DT PEDULI</p>
-        <p class="text-2xl text-center">Tabungan Qurban</p>
-      </div>
-      <h2 class="text-3xl font-bold text-center">Tabungan Total</h2>
-      <p class="text-5xl font-extrabold text-center">
-        Rp<?= number_format($total ?? 0, 0, ',', '.'); ?>
-      </p>
-      <p class="text-2xl text-center">
-        <?= $count_qurban . " Qurban Card"; ?>
-      </p>
-     </div>
+<body class="bg-white">
+<div class="flex">
+<?php include 'sidebar.php'; ?>
+    <div class="bg-white p-8 rounded-lg shadow-lg w-full">
+        <!-- Ringkasan Data -->
+        <div class="mb-8">
+            <h2 class="text-center text-2xl font-bold mb-6 text-[#1845A2]">Ringkasan Data</h2>
+                    <!-- Information Icon and Tooltip -->
+                <div class="mt-4 text-left">
+                <span class="relative group">
+                    <!-- Information icon positioned to the left -->
+                    <i class="fas fa-info-circle text-xl cursor-pointer"></i>
 
-     <!-- Transaksi -->
-     <div class="bg-gray-200 p-6 rounded-lg">
-      <h2 class="text-xl font-bold mb-4">Transaksi</h2>
-      <table class="w-full text-left">
-        <thead>
-          <tr class="bg-gray-300">
-            <th class="p-2">Nama</th>
-            <th class="p-2">Tipe Qurban</th>
-            <th class="p-2">Metode Pembayaran</th>
-            <th class="p-2">Jumlah</th>
-            <th class="p-2">Waktu</th>
-          </tr>
-        </thead>
-        <tbody>
-          <?php 
-            if ($transaksi->num_rows > 0) {
-              while ($row = $transaksi->fetch_assoc()) {
-                $jenisTransaksiClass = $row['metode_pembayaran'] == 'qris' ? 'text-green-500' : 'text-yellow-500';
-                echo "<tr class='border-t'>
-                        <td class='p-2'>{$row['nama']}</td>
-                        <td class='p-2'>{$row['tipe_qurban']}</td>
-                        <td class='p-2 {$jenisTransaksiClass}'>{$row['metode_pembayaran']}</td>
-                        <td class='p-2 {$jenisTransaksiClass}'>" . number_format($row['jumlah'], 0, ',', '.') . "</td>
-                        <td class='p-2'>{$row['waktu']}</td>
-                      </tr>";
-              }
-            } else {
-              echo "<tr><td colspan='5' class='text-center'>Tidak ada transaksi.</td></tr>";
-            }
-          ?>
-        </tbody>
-      </table>
-     </div>
-
-     <!-- Pengqurban & Transaksi -->
-     <div class="flex space-x-4">
-      <!-- Box 1: Pengqurban -->
-      <div class="bg-gray-200 p-6 rounded-lg flex justify-between items-center w-1/2 shadow-lg">
-        <div class="flex items-center space-x-3">
-          <i class="fas fa-users text-green-500 text-4xl"></i>
-          <div>
-            <h2 class="text-xl font-bold">Pengqurban</h2>
-            <p class="text-3xl font-bold text-green-500">
-              <?= $count_pengqurban; ?>
-            </p>
-          </div>
+                    <!-- Tooltip with better spacing and wrapping -->
+                    <span 
+                    class="absolute left-0 transform translate-x-0 bg-black text-white text-sm rounded px-3 py-2 mt-2 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity duration-200 max-w-xs w-max break-words">
+                    <strong>Uang Qurban</strong> : Uang yang sudah masuk dan target biaya qurban sudah terpenuhi.<br>
+                    <strong>Uang Tabungan</strong> : Uang yang sudah masuk dan target biaya qurban belum terpenuhi.<br>
+                    <strong>Total Saldo</strong> ; Kelebihan uang masuk dari qurban yang sudha terpenuhi
+                    </span>
+                </span>
+                </div>
+            <div class="grid grid-cols-3 gap-6">
+                <div class="bg-[#1845A2] p-6 rounded-lg text-center shadow-md text-white">
+                    <p class="text-lg font-semibold">Uang Qurban</p>
+                    <p class="text-2xl font-bold">Rp<?= number_format($uang_qurban, 0, ',', '.'); ?></p>
+                </div>
+                <div class="bg-[#1845A2] p-6 rounded-lg text-center shadow-md text-white">
+                    <p class="text-lg font-semibold">Uang Tabungan</p>
+                    <p class="text-2xl font-bold">Rp<?= number_format($uang_tabungan, 0, ',', '.'); ?></p>
+                </div>
+                <div class="bg-[#1845A2] p-6 rounded-lg text-center shadow-md text-white">
+                    <p class="text-lg font-semibold">Saldo</p>
+                    <p class="text-2xl font-bold">Rp<?= number_format($saldo, 0, ',', '.'); ?></p>
+                </div>
+                <div class="bg-[#1845A2] p-6 rounded-lg text-center shadow-md text-white">
+                    <p class="text-lg font-semibold">Total Hewan</p>
+                    <p class="text-2xl font-bold"><?= $count_qurban . " Hewan Qurban"; ?></p>
+                </div>
+                <div class="bg-[#1845A2] p-6 rounded-lg text-center shadow-md text-white">
+                    <p class="text-lg font-semibold">Jumlah Pengurban</p>
+                    <p class="text-2xl font-bold"><?= $count_pengqurban; ?></p>
+                </div>
+                <div class="bg-[#1845A2] p-6 rounded-lg text-center shadow-md text-white">
+                    <p class="text-lg font-semibold">Jumlah Transaksi</p>
+                    <p class="text-2xl font-bold"><?= $count_transaksi; ?></p>
+                </div>
+            </div>
         </div>
-      </div>
 
-      <!-- Box 2: Transaksi -->
-      <div class="bg-gray-200 p-6 rounded-lg flex justify-between items-center w-1/2 shadow-lg">
-        <div class="flex items-center space-x-3">
-          <i class="fas fa-hand-holding-usd text-red-500 text-4xl"></i>
-          <div>
-            <h2 class="text-xl font-bold">Transaksi</h2>
-            <p class="text-3xl font-bold text-red-500">
-              <?= $count_transaksi; ?>
-            </p>
-          </div>
+        <!--grid untuk Detail Qurban dan Statistik -->
+        <div class="grid grid-cols-2 gap-6">
+            <!--statistik keuangan -->
+            <div class="bg-gray-200 p-6 rounded-lg shadow-md">
+                <h2 class="text-2xl font-bold mb-6 text-[#1845A2]">Statistik Keuangan</h2>
+                <canvas id="chartKeuangan" ></canvas>
+            </div>
+
+            <!--statistik Qurban -->
+            <div class="bg-gray-200 p-6 rounded-lg shadow-md">
+                <h2 class="text-2xl font-bold mb-6 text-[#1845A2]">Statistik Qurban</h2>
+                <canvas id="chartQurban"></canvas>
+            </div>
         </div>
-      </div>
-     </div>
 
-     <!-- Tipe Qurban -->
-     <div class="bg-gray-200 p-6 rounded-lg">
-      <h2 class="text-xl font-bold mb-4">Tipe Qurban</h2>
-      <div class="space-y-2">
-        <?php 
-          while ($row = $detail_qurban->fetch_assoc()) {
-            echo "<div class='flex justify-between'>
-                    <span>{$row['tipe_qurban']}</span>
-                    <span>{$row['jumlah']} Hewan</span>
-                  </div>";
-          }
-        ?>
-      </div>
-     </div>
-
+        <!-- Transaksi Terakhir -->
+        <div class="mt-8">
+            <h2 class="text-center text-2xl font-bold mb-6 text-[#1845A2]">Transaksi Terakhir</h2>
+            <table class="w-full border-collapse bg-white shadow-md rounded-lg overflow-hidden">
+                <thead>
+                    <tr class="bg-[#1845A2] text-white">
+                        <th class="p-4 text-left">Nama</th>
+                        <th class="p-4 text-left">Tipe</th>
+                        <th class="p-4 text-left">Metode</th>
+                        <th class="p-4 text-left">Jumlah</th>
+                        <th class="p-4 text-left">Waktu</th>
+                    </tr>
+                </thead>
+                <tbody>
+                <?php 
+                if ($transaksi->num_rows > 0) {
+                    while ($row = $transaksi->fetch_assoc()) {
+                        $jenisTransaksiClass = $row['metode_pembayaran'] == 'qris' ? 'text-green-500' : 'text-yellow-500';
+                        echo "<tr class='hover:bg-gray-50'>
+                                <td class='border border-gray-300 p-3'>{$row['nama']}</td>
+                                <td class='border border-gray-300 p-3'>{$row['tipe_qurban']}</td>
+                                <td class='border border-gray-300 p-3 {$jenisTransaksiClass}'>{$row['metode_pembayaran']}</td>
+                                <td class='border border-gray-300 p-3 text-right {$jenisTransaksiClass}'>Rp" . number_format($row['jumlah'], 0, ',', '.') . "</td>
+                                <td class='border border-gray-300 p-3'>{$row['waktu']}</td>
+                              </tr>";
+                    }
+                } else {
+                    echo "<tr>
+                            <td colspan='5' class='border border-gray-300 p-3 text-center text-gray-500'>Tidak ada transaksi.</td>
+                          </tr>";
+                }
+                ?>
+                </tbody>
+            </table>
+        </div>
     </div>
-   </div>
-  </div>
+</div>
+
+<script>
+
+// Function to generate a random color in hex format
+function getRandomColor() {
+    const letters = '0123456789ABCDEF';
+    let color = '#';
+    for (let i = 0; i < 6; i++) {
+        color += letters[Math.floor(Math.random() * 16)];
+    }
+    return color;
+}
+
+const ctx = document.getElementById('chartQurban').getContext('2d');
+
+    // PHP data passed into JavaScript
+    const labels = <?php echo json_encode($labels); ?>;
+    const data = <?php echo json_encode($data); ?>;
+
+    // Generate random colors for each dataset entry
+    const backgroundColors = data.map(() => getRandomColor());
+
+    const chartQurban = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,  // Dynamic labels from PHP
+            datasets: [{
+                label: 'Jumlah Hewan Qurban',
+                data: data,  // Dynamic data from PHP
+                backgroundColor: backgroundColors  // Random colors for each bar
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: false }
+            }
+        }
+    });
+</script>
+
+<script>
+const pieCtx = document.getElementById('chartKeuangan').getContext('2d');
+
+// Ubah ukuran canvas sebelum membuat chart
+document.getElementById('chartKeuangan').width = 50;
+document.getElementById('chartKeuangan').height = 50;
+
+// Data total_biaya dan total_terkumpul dari PHP
+const pieData = {
+    labels: ['Total Biaya', 'Total Terkumpul'],
+    datasets: [{
+        data: [<?= $totalBiaya ?>, <?= $totalTerkumpul ?>],  // Data dari PHP
+        backgroundColor: ['#FF6384', '#36A2EB']  // Warna untuk setiap bagian
+    }]
+};
+
+const pieChart = new Chart(pieCtx, {
+    type: 'pie',
+    data: pieData,
+    options: {
+        responsive: true,
+        plugins: {
+            legend: { position: 'top' }
+        }
+    }
+});
+</script>
+
+
+
 </body>
 </html>
