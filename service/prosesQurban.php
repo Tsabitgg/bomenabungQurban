@@ -5,6 +5,8 @@ include 'data.php';
 if (isset($_POST['add_qurban'])) {
     $tipe_qurban = $_POST['tipe_qurban'];
     $biaya = $_POST['biaya'];
+    $biaya = str_replace(['Rp', '.', ','], '', $biaya); // Remove 'Rp', dots, and commas
+    $biaya = (float)$biaya; // Convert to a floating-point number
     $jenis = $_POST['jenis'];
     
     $sql = "INSERT INTO qurban (tipe_qurban, biaya, status, jenis) VALUES ('$tipe_qurban', $biaya, 'Aktif', '$jenis')";

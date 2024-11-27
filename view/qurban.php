@@ -93,6 +93,7 @@ if ($qurbanResult->num_rows > 0) {
                     <thead class="bg-[#E0E0E0]">
                         <tr>
                             <th class="border p-2">Tipe Hewan</th>
+                            <th class="border p-2">Jenis Hewan</th>
                             <th class="border p-2">Jumlah Hewan</th>
                         </tr>
                     </thead>
@@ -100,12 +101,69 @@ if ($qurbanResult->num_rows > 0) {
                         <?php foreach ($rincianHewan as $hewan) : ?>
                             <tr>
                                 <td class="border p-2"><?php echo $hewan['tipe_qurban']; ?></td>
+                                <td class="border p-2"><?php echo $hewan['jenis']; ?></td>
                                 <td class="border p-2"><?php echo number_format($hewan['jumlah']); ?> Hewan</td>
                             </tr>
                         <?php endforeach; ?>
                     </tbody>
                 </table>
             </div>
+
+            <!-- Button untuk Tambah Qurban -->
+            <div class="mt-8">
+                <button id="addQurbanBtn" class="bg-blue-500 text-white p-2 rounded">Tambah Qurban</button>
+                <button id="editQurbanBtn" class="bg-green-500 text-white p-2 rounded ml-4">Edit Qurban</button>
+            </div>
+
+            <!-- Modal Tambah Qurban -->
+            <div id="addQurbanModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
+                <div class="bg-white p-6 rounded-lg w-1/3">
+                    <h2 class="text-xl font-bold">Tambah Tipe Qurban</h2>
+                    <form method="POST" action="../service/prosesQurban.php">
+                        <div class="mb-4">
+                            <label for="tipe_qurban" class="block">Tipe Qurban: (contoh: Sapi, Kambing dll.)</label>
+                            <input type="text" id="tipe_qurban" name="tipe_qurban" class="border p-2 w-full" required>
+                        </div>
+                        <div class="mb-4">
+    <label for="biaya" class="block">Biaya:</label>
+    <input type="text" id="biaya" name="biaya" class="border p-2 w-full" required oninput="formatRupiah(this)">
+</div>
+                        <div class="mb-4">
+                            <label for="jenis" class="block">Jenis (contoh: Berjamaah, 1 Ekor):</label>
+                            <input type="text" id="jenis" name="jenis" class="border p-2 w-full" required>
+                        </div>
+                        <button type="submit" name="add_qurban" class="bg-blue-500 text-white p-2 rounded">Tambah</button>
+                        <button type="button" id="closeAddQurbanModal" class="bg-red-500 text-white p-2 rounded mt-2">Tutup</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Modal Edit Qurban -->
+            <div id="editQurbanModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
+                <div class="bg-white p-6 rounded-lg w-1/3">
+                    <h2 class="text-xl font-bold">Edit Tipe Qurban</h2>
+                    <form method="POST" action="../service/prosesQurban.php">
+                        <div class="mb-4">
+                            <label for="qurban_id" class="block">Pilih Tipe Qurban:</label>
+                            <select id="qurban_id" name="qurban_id" class="border p-2 w-full" required>
+                                <?php
+                                $qurbanData = $conn->query("SELECT qurban_id, tipe_qurban, jenis FROM qurban WHERE status = 'Aktif'");
+                                while ($row = $qurbanData->fetch_assoc()) {
+                                    echo "<option value='" . $row['qurban_id'] . "'>" . $row['tipe_qurban'] . (!empty($row['jenis']) ? " (" . $row['jenis'] . ")" : "") . "</option>";
+                                }
+                                ?>
+                            </select>
+                        </div>
+                        <div class="mb-4">
+                            <label for="tipe_qurban" class="block">Nama Tipe Qurban Baru:</label>
+                            <input type="text" id="tipe_qurban" name="tipe_qurban" class="border p-2 w-full" required>
+                        </div>
+                        <button type="submit" name="edit_qurban" class="bg-green-500 text-white p-2 rounded">Edit</button>
+                        <button type="button" id="closeEditQurbanModal" class="bg-red-500 text-white p-2 rounded mt-2">Tutup</button>
+                    </form>
+                </div>
+            </div>
+
 
             <div class="mt-6 mb-4">
                 <form method="POST" class="flex items-center">
@@ -190,6 +248,18 @@ if ($qurbanResult->num_rows > 0) {
         document.getElementById('closeEditQurbanModal').addEventListener('click', function() {
             document.getElementById('editQurbanModal').classList.add('hidden');
         });
+
+        function formatRupiah(input) {
+    let value = input.value.replace(/[^,\d]/g, '').toString();
+    let split = value.split(',');
+    let main = split[0];
+    let suffix = split.length > 1 ? ',' + split[1] : '';
+    
+    // Add commas as thousand separator
+    main = main.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    
+    input.value = 'Rp ' + main + suffix;
+}
     </script>
 </body>
 </html>

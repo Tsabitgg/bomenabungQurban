@@ -81,9 +81,10 @@ function getTotalTransaksi($conn) {
 // Fungsi mengambil data qurban
 function getDetailQurban($conn) {
     $sql = "SELECT 
-                q.tipe_qurban as tipe_qurban, 
-                COUNT(kq.kartu_qurban_id) as jumlah
-            FROM qurban q JOIN kartu_qurban kq on q.qurban_id = kq.qurban_id GROUP BY tipe_qurban";
+    q.tipe_qurban AS tipe_qurban, q.jenis, 
+    COUNT(kq.kartu_qurban_id) AS jumlah FROM 
+    qurban q LEFT JOIN kartu_qurban kq ON q.qurban_id = kq.qurban_id
+    GROUP BY q.tipe_qurban, q.jenis;";
 
     $result = $conn->query($sql);
     return $result;
