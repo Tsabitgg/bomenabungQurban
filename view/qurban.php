@@ -28,24 +28,41 @@ $offset = ($page - 1) * $perPage;
 
 // Query for fetching data
 if ($search != '') {
-    $query = "SELECT * FROM kartu_qurban kq
+    $query = "SELECT kq.*, q.tipe_qurban, u.nama AS nama_user, u.nama_orang_tua AS nama_orang_tua, u.nomor_hp AS nomor_hp
+              FROM kartu_qurban kq
               JOIN qurban q ON kq.qurban_id = q.qurban_id
-              WHERE kq.nama_pengqurban LIKE '%$search%' OR kq.va_number LIKE '%$search%'
+              JOIN users u ON u.user_id = kq.user_id
+              WHERE kq.nama_pengqurban LIKE '%$search%' 
+                 OR kq.va_number LIKE '%$search%'
+                 OR u.nama LIKE '%$search%' 
+                 OR u.nomor_hp LIKE '%$search%'
               LIMIT $perPage OFFSET $offset";
+              
     $kartuQurbanResult = $conn->query($query);
 
-    $countQuery = "SELECT COUNT(*) as total FROM kartu_qurban kq
+    $countQuery = "SELECT COUNT(*) as total 
+                   FROM kartu_qurban kq
                    JOIN qurban q ON kq.qurban_id = q.qurban_id
-                   WHERE kq.nama_pengqurban LIKE '%$search%' OR kq.va_number LIKE '%$search%'";
+                   JOIN users u ON u.user_id = kq.user_id
+                   WHERE kq.nama_pengqurban LIKE '%$search%' 
+                      OR kq.va_number LIKE '%$search%' 
+                      OR u.nama LIKE '%$search%' 
+                      OR u.nomor_hp LIKE '%$search%'";
 } else {
-    $query = "SELECT * FROM kartu_qurban kq
+    $query = "SELECT kq.*, q.tipe_qurban, u.nama AS nama_user, u.nama_orang_tua AS nama_orang_tua, u.nomor_hp AS nomor_hp
+              FROM kartu_qurban kq
               JOIN qurban q ON kq.qurban_id = q.qurban_id
+              JOIN users u ON u.user_id = kq.user_id
               LIMIT $perPage OFFSET $offset";
+              
     $kartuQurbanResult = $conn->query($query);
 
-    $countQuery = "SELECT COUNT(*) as total FROM kartu_qurban kq
-                   JOIN qurban q ON kq.qurban_id = q.qurban_id";
+    $countQuery = "SELECT COUNT(*) as total 
+                   FROM kartu_qurban kq
+                   JOIN qurban q ON kq.qurban_id = q.qurban_id
+                   JOIN users u ON u.user_id = kq.user_id";
 }
+
 $totalRowsResult = $conn->query($countQuery);
 $totalRows = $totalRowsResult->fetch_assoc()['total'];
 $totalPages = ceil($totalRows / $perPage);
@@ -188,9 +205,12 @@ if ($qurbanResult->num_rows > 0) {
                 <thead>
                     <tr class="bg-gray-300">
                         <th class="border p-2">No</th>
+                        <th class="border p-2">Akun</th>
                         <th class="border p-2">Nama Pengqurban</th>
                         <th class="border p-2">Tipe Qurban</th>
+                        <th class="border p-2">Biaya</th>
                         <th class="border p-2">Jumlah Terkumpul</th>
+                        <th class="border p-2">Nomor Handphone</th>
                         <th class="border p-2">Status</th>
                         <th class="border p-2">VA Number</th>
                     </tr>
@@ -201,9 +221,18 @@ if ($qurbanResult->num_rows > 0) {
                         <?php while ($row = $kartuQurbanResult->fetch_assoc()) : ?>
                             <tr>
                                 <td class="border p-2"><?php echo $no++; ?></td>
+                                <td class="border p-2">
+                                    <?php 
+                                    echo isset($row['nama_user']) ? $row['nama_user'] : ''; 
+                                    echo ' '; 
+                                    echo isset($row['nama_orang_tua']) ? $row['nama_orang_tua'] : ''; 
+                                    ?>
+                                </td>
                                 <td class="border p-2"><?php echo $row['nama_pengqurban']; ?></td>
                                 <td class="border p-2"><?php echo $row['tipe_qurban']; ?></td>
-                                <td class="border p-2"><?php echo number_format($row['jumlah_terkumpul']); ?></td>
+                                <td class="border p-2"><?php echo 'Rp ' . number_format($row['biaya'], 0, ',', '.'); ?></td>
+                                <td class="border p-2"><?php echo 'Rp ' . number_format($row['jumlah_terkumpul'], 0, ',', '.'); ?></td>
+                                <td class="border p-2"><?php echo $row['nomor_hp']; ?></td>
                                 <td class="border p-2"><?php echo $row['status']; ?></td>
                                 <td class="border p-2"><?php echo $row['va_number']; ?></td>
                             </tr>
