@@ -17,6 +17,20 @@ function getSUMTransaksi($conn) {
     return $result;
 }
 
+function getSUMBiayaAdmin($conn) {
+    $sql = "SELECT SUM(biaya_admin) FROM transaksi";
+    $result = $conn->query($sql);
+
+    return $result;
+}
+
+function getSUMTotalPembayaran($conn) {
+    $sql = "SELECT SUM(total_tagihan) FROM transaksi";
+    $result = $conn->query($sql);
+
+    return $result;
+}
+
 function getCountKartuQurban($conn) {
     $sql = "SELECT COUNT(kartu_qurban_id) FROM kartu_qurban";
     $result = $conn->query($sql);
@@ -59,7 +73,9 @@ function getPaginatedTransaksi($conn, $offset, $limit) {
                 u.nama AS nama, 
                 q.tipe_qurban AS tipe_qurban, 
                 t.metode_pembayaran AS metode_pembayaran, 
-                t.jumlah_setoran AS jumlah, 
+                t.jumlah_setoran AS jumlah,
+                t.biaya_admin AS biaya_admin,
+                t.total_tagihan AS total_pembayaran,
                 t.tanggal_transaksi AS waktu
             FROM users u
             JOIN kartu_qurban kq ON u.user_id = kq.user_id

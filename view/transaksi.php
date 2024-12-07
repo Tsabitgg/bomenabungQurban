@@ -42,20 +42,33 @@ $transactions = getPaginatedTransaksi($conn, $offset, $per_page);
             </header>
 
             <!-- Dashboard Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+                 <!-- Total transaksi -->
+                <div class="bg-[#1845A2] text-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-xl font-bold">Jumlah Transaksi</h2>
+                    <p class="text-md font-bold mt-2">
+                        <?= number_format(getCountTransaksi($conn)->fetch_array()[0], 0, ',', '.'); ?>
+                    </p>
+                </div>
                 <!-- Total Transactions Card -->
                 <div class="bg-[#1845A2] text-white p-6 rounded-lg shadow-md">
-                    <h2 class="text-xl font-bold">Jumlah Nominal Transaksi</h2>
-                    <p class="text-4xl font-bold mt-2">
+                    <h2 class="text-xl font-bold">Total Setoran</h2>
+                    <p class="text-5md font-bold mt-2">
                         Rp<?= number_format(getSUMTransaksi($conn)->fetch_array()[0], 0, ',', '.'); ?>
                     </p>
                 </div>
 
-                <!-- Total Qurban Cards -->
                 <div class="bg-[#1845A2] text-white p-6 rounded-lg shadow-md">
-                    <h2 class="text-xl font-bold">Jumlah Transaksi</h2>
-                    <p class="text-3xl font-bold mt-2">
-                        <?= number_format(getCountTransaksi($conn)->fetch_array()[0], 0, ',', '.'); ?>
+                    <h2 class="text-xl font-bold">Total Biaya Admin</h2>
+                    <p class="text-md font-bold mt-2">
+                        Rp<?= number_format(getSUMBiayaAdmin($conn)->fetch_array()[0], 0, ',', '.'); ?>
+                    </p>
+                </div>
+
+                <div class="bg-[#1845A2] text-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-xl font-bold">Total Pembayaran</h2>
+                    <p class="text-md font-bold mt-2">
+                        Rp<?= number_format(getSUMTotalPembayaran($conn)->fetch_array()[0], 0, ',', '.'); ?>
                     </p>
                 </div>
             </div>
@@ -68,9 +81,11 @@ $transactions = getPaginatedTransaksi($conn, $offset, $per_page);
                         <thead>
                             <tr class="bg-gray-300 text-left">
                                 <th class="p-2 border">Nama</th>
-                                <th class="p-2 border">Jenis Qurban</th>
+                                <th class="p-2 border">Tipe Qurban</th>
                                 <th class="p-2 border">Jenis Transaksi</th>
-                                <th class="p-2 border">Jumlah</th>
+                                <th class="p-2 border">Jumlah Setoran</th>
+                                <th class="p-2 border">Biaya Admin</th>
+                                <th class="p-2 border">Total Pembayaran</th>
                                 <th class="p-2 border">Waktu</th>
                             </tr>
                         </thead>
@@ -84,6 +99,8 @@ $transactions = getPaginatedTransaksi($conn, $offset, $per_page);
                                             <?= htmlspecialchars($row['metode_pembayaran']) ?>
                                         </td>
                                         <td class="p-2 border">Rp<?= number_format($row['jumlah'], 0, ',', '.') ?></td>
+                                        <td class="p-2 border">Rp<?= number_format($row['biaya_admin'], 0, ',', '.') ?></td>
+                                        <td class="p-2 border">Rp<?= number_format($row['total_pembayaran'], 0, ',', '.') ?></td>
                                         <td class="p-2 border"><?= htmlspecialchars($row['waktu']) ?></td>
                                     </tr>
                                 <?php endwhile; ?>
