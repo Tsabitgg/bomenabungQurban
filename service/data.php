@@ -62,7 +62,7 @@ function getTransaksiForDashboard($conn) {
             FROM users u
             JOIN kartu_qurban kq ON u.user_id = kq.user_id
             JOIN qurban q ON kq.qurban_id = q.qurban_id
-            JOIN transaksi t ON kq.kartu_qurban_id = t.kartu_qurban_id limit 6";
+            JOIN transaksi t ON kq.kartu_qurban_id = t.kartu_qurban_id limit 20";
     
     $result = $conn->query($sql);
     return $result;

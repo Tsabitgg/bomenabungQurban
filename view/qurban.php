@@ -142,9 +142,9 @@ if ($qurbanResult->num_rows > 0) {
                             <input type="text" id="tipe_qurban" name="tipe_qurban" class="border p-2 w-full" required>
                         </div>
                         <div class="mb-4">
-    <label for="biaya" class="block">Biaya:</label>
-    <input type="text" id="biaya" name="biaya" class="border p-2 w-full" required oninput="formatRupiah(this)">
-</div>
+                            <label for="biaya" class="block">Biaya:</label>
+                            <input type="text" id="biaya" name="biaya" class="border p-2 w-full" required oninput="formatRupiah(this)">
+                        </div>
                         <div class="mb-4">
                             <label for="jenis" class="block">Jenis (contoh: Berjamaah, 1 Ekor):</label>
                             <input type="text" id="jenis" name="jenis" class="border p-2 w-full" required>
@@ -174,6 +174,10 @@ if ($qurbanResult->num_rows > 0) {
                         <div class="mb-4">
                             <label for="tipe_qurban" class="block">Nama Tipe Qurban Baru:</label>
                             <input type="text" id="tipe_qurban" name="tipe_qurban" class="border p-2 w-full" required>
+                        </div>
+                        <div>
+                        <label for="biaya" class="block">Harga Qurban Baru:</label>
+                            <input type="text" id="biaya" name="biaya" class="border p-2 w-full" required>
                         </div>
                         <button type="submit" name="edit_qurban" class="bg-green-500 text-white p-2 rounded">Edit</button>
                         <button type="button" id="closeEditQurbanModal" class="bg-red-500 text-white p-2 rounded mt-2">Tutup</button>

@@ -112,6 +112,7 @@ while ($row = $detail_qurban->fetch_assoc()) {
         <!-- Transaksi Terakhir -->
         <div class="mt-8">
             <h2 class="text-center text-2xl font-bold mb-6 text-[#1845A2]">Transaksi Terakhir</h2>
+            <p class="text-sm text-gray-500 mb-4 text-center">* Hanya menampilkan 20 transaksi terakhir</p>
             <table class="w-full border-collapse bg-white shadow-md rounded-lg overflow-hidden">
                 <thead>
                     <tr class="bg-[#1845A2] text-white">
@@ -133,17 +134,18 @@ while ($row = $detail_qurban->fetch_assoc()) {
                                 <td class='border border-gray-300 p-3 {$jenisTransaksiClass}'>{$row['metode_pembayaran']}</td>
                                 <td class='border border-gray-300 p-3 text-right {$jenisTransaksiClass}'>Rp" . number_format($row['jumlah'], 0, ',', '.') . "</td>
                                 <td class='border border-gray-300 p-3'>{$row['waktu']}</td>
-                              </tr>";
+                            </tr>";
                     }
                 } else {
                     echo "<tr>
                             <td colspan='5' class='border border-gray-300 p-3 text-center text-gray-500'>Tidak ada transaksi.</td>
-                          </tr>";
+                        </tr>";
                 }
                 ?>
                 </tbody>
             </table>
         </div>
+
     </div>
 </div>
 

@@ -21,14 +21,18 @@ if (isset($_POST['add_qurban'])) {
 if (isset($_POST['edit_qurban'])) {
     $qurban_id = $_POST['qurban_id'];
     $tipe_qurban = $_POST['tipe_qurban'];
+    $biaya = $_POST['biaya'];
     
-    $sql = "UPDATE qurban SET tipe_qurban='$tipe_qurban' WHERE qurban_id=$qurban_id";
+    // Update tipe_qurban dan biaya
+    $sql = "UPDATE qurban SET tipe_qurban='$tipe_qurban', biaya='$biaya' WHERE qurban_id=$qurban_id";
     if ($conn->query($sql) === TRUE) {
-        echo "Tipe qurban berhasil diupdate!";
+        echo "Tipe qurban dan biaya berhasil diupdate!";
     } else {
         echo "Error: " . $sql . "<br>" . $conn->error;
     }
 }
+
+
 
 // Fungsi untuk menonaktifkan tipe qurban
 if (isset($_GET['disable_qurban'])) {
